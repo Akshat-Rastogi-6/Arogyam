@@ -1,5 +1,7 @@
 import React from "react";
+
 import { useNavigate } from "react-router-dom";
+
 import "./Dashboard.css";
 import chatbotIcon from "../public/images/dashboard/chatbot.png";
 import crossBandIcon from "../public/images/dashboard/cross-on-cross band-aid.png";
@@ -28,6 +30,7 @@ const Dashboard = () => {
           <div className="card yellow patient">
             <h3>Patient Summary</h3>
             <button className="edit-btn">View Profile</button>
+
           </div>
 
           {/* Seasonal Tips: occupies cells 3,4,5 */}
@@ -39,9 +42,11 @@ const Dashboard = () => {
           <div className="card actions action">
             <h3>Actions</h3>
             <div className="button-grid">
+
             <button onClick={() => navigate('/chatbot')}>
-      <img src={chatbotIcon} alt="Chatbot" />
-    </button>
+              <img src={chatbotIcon} alt="Chatbot" />
+            </button>
+
               <button>
                 <img src={alert1Icon} alt="Alert" />
               </button>
@@ -70,11 +75,13 @@ const Dashboard = () => {
           </div>
 
           {/* Natural Therapy: occupies cells 13,14 */}
+
           <div
             className="card green natural"
             onClick={() => navigate("/natural-therapy")} // Add onClick handler
             style={{ cursor: "pointer" }} // Change cursor to pointer
           >
+
             <h3>Natural Therapy</h3>
             <img
               className="natural-icon"
