@@ -1,33 +1,85 @@
 import React from 'react';
-import { FaLeaf, FaUserMd, FaCalendarAlt, FaLink, FaNewspaper, FaSpa, FaHome } from 'react-icons/fa';
 import './Dashboard.css';
+import chatbotIcon from '../public/images/dashboard/chatbot.png'
+import crossBandIcon from '../public/images/dashboard/cross-on-cross band-aid.png'
+import alert1Icon from '../public/images/dashboard/alert.png'
+import alert2Icon from '../public/images/dashboard/alert2.png'
+import fitnessWatchIcon from '../public/images/dashboard/fitness watch.png'
+import naturalIcon from '../public/images/dashboard/Protecting your health with natural remedies.png'
+// import helpIcon from '../public/images/dashboard/help.png'
+// import menuIcon from '../public/images/dashboard/Menu.png'
+// import userIcon from '../public/images/dashboard/user.png'
+// import appointmentIcon from '../public/images/dashboard/Home Solutions and Home Improvement.png'
+// import homeRemediesIcon from '../public/images/dashboard/Online doctor appointment in health app.png'
+// import cloudIcon from '../public/images/dashboard/Mental health support with cloud characters.png'
+// import naturalIcon from '../public/images/dashboard/Protecting your health with natural remedies.png'
+
 
 const Dashboard = () => {
-  const cards = [
-    { icon: <FaLeaf />, title: "Seasonal Tips", desc: "Stay healthy this season with our expert tips." },
-    { icon: <FaUserMd />, title: "Patient Summary", desc: "View your health summary and progress." },
-    { icon: <FaCalendarAlt />, title: "Appointments", desc: "Manage your upcoming appointments." },
-    { icon: <FaLink />, title: "Integration", desc: "Connect with other health services." },
-    { icon: <FaNewspaper />, title: "Headlines", desc: "Latest health news and updates." },
-    { icon: <FaSpa />, title: "Natural Therapy", desc: "Explore natural remedies and therapies." },
-    { icon: <FaHome />, title: "Home Remedies", desc: "Simple home remedies for common ailments." }
-  ];
-
   return (
     <div className="dashboard">
-      <header className="dashboard-header">
-        <h1>Welcome to Arogyam</h1>
-        <p className="header-subtitle">Your personal health dashboard</p>
-      </header>
+      <div className="sidebar">
+        <h2>Dashboard</h2>
+        <button className="menu-btn">☰</button>
+      </div>
 
-      <div className="dashboard-grid">
-        {cards.map((card, index) => (
-          <div className="dashboard-card" key={index}>
-            <div className="card-icon">{card.icon}</div>
-            <h2>{card.title}</h2>
-            <p>{card.desc}</p>
+      <div className="grid-container">
+        {/* Patient Summary: spans cells 1,2,7,8 */}
+        <div className="card yellow patient">
+          <h3>Patient Summary</h3>
+          <button className="edit-btn">Edit</button>
+        </div>
+
+        {/* Seasonal Tips: occupies cells 3,4,5 */}
+        <div className="card blue seasonal">
+          <h3>Seasonal Tips</h3>
+          <p>Stay healthy this season with our expert tips.</p>
+        </div>
+
+        {/* Actions: occupies cell 6 */}
+        <div className="card actions action">
+          <h3>Actions</h3>
+          <div className="button-grid">
+            <button>
+              <img src={chatbotIcon} alt="Chatbot" />
+            </button>
+            <button>
+              <img src={alert1Icon} alt="Alert" />
+            </button>
+            <button>
+              <img src= {alert2Icon} alt="Alert 2" />
+            </button>
+            <button>
+              <img src={crossBandIcon} alt="Close" />
+            </button>
           </div>
-        ))}
+        </div>
+
+        {/* Appointment Deadlines: occupies cell 9 */}
+        <div className="card teal appointment">
+          <h3>Appointment Deadlines</h3>
+          <p>Manage timely appointments.</p>
+        </div>
+
+        {/* Google Fit Integration: occupies cells 10,11,12 */}
+        <div className="card white google">
+          <img className="fitness-watch" src={fitnessWatchIcon} alt="Fitness Watch" />
+          <h3>Google Fit Integration</h3>
+          <p>Connect your Google Fit data.</p>
+        </div>
+
+        {/* Natural Therapy: occupies cells 13,14 */}
+        <div className="card green natural">
+          <h3>Natural Therapy</h3>
+          <p>Explore natural healing methods.</p>
+          <img className="natural-icon" src={naturalIcon} alt="Natural Icon" />
+        </div>
+
+        {/* Home Remedies: occupies cells 15,16,17,18 */}
+        <div className="card pink home">
+          <h3>Home Remedies</h3>
+          <p>Discover simple home remedies.</p>
+        </div>
       </div>
     </div>
   );

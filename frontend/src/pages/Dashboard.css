@@ -1,9 +1,11 @@
 /* General Styles */
 .dashboard {
   padding: 2rem;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   background-color: #f8f9fa;
   min-height: 100vh;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
 .dashboard-header {
@@ -76,12 +78,295 @@
   .dashboard {
     padding: 1rem;
   }
-  
+
   .dashboard-header h1 {
     font-size: 2rem;
   }
-  
+
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* General Page Styles */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #121212;
+  color: white;
+  margin: 0;
+  padding: 0;
+}
+
+/* Sidebar */
+.sidebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #2a2a2a;
+}
+
+/* Menu Button */
+.menu-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+}
+
+/* Updated Grid Layout to 6 columns and 3 rows */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(3, auto);
+  grid-gap: 15px;
+  padding: 20px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* Utility: Span two columns */
+.span2 {
+  grid-column: span 2;
+}
+
+/* Card Styles */
+.card {
+  background-color: #333;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 18px;
+  position: relative;
+}
+
+/* Patient Summary: cells 1,2,7,8 */
+.patient {
+  grid-column: 1 / span 2;
+  grid-row: 1 / span 2;
+}
+
+/* Seasonal Tips: cells 3,4,5 */
+.seasonal {
+  grid-column: 3 / span 3;
+  grid-row: 1;
+}
+
+/* Actions: cell 6 */
+.action {
+  grid-column: 6;
+  grid-row: 1;
+}
+
+/* Appointment Deadlines: cell 9 */
+.appointment {
+  grid-column: 3 / span 2 ;
+  grid-row: 2;
+}
+
+/* Google Fit Integration: cells 10,11,12 */
+.google {
+  position: relative;
+  grid-column: 5 / span 3;
+  grid-row: 2;
+}
+
+/* Overlay fitness watch icon in the Google Fit card */
+.google .fitness-watch {
+  position: absolute;
+  top: 0px;
+  right: -30px;
+  width: 110px;
+  height: 100%;
+}
+
+/* Natural Therapy: cells 13,14 */
+.natural {
+  position: relative;
+  grid-column: 1 / span 2;
+  grid-row: 3;
+}
+
+/* Overlay natural icon in the Natural Therapy card */
+.natural .natural-icon {
+  position: absolute;
+  bottom: 0px;
+  left: -10px;
+  width: 150px;
+  height: 50%;
+  object-fit: contain;
+}
+
+/* Home Remedies: cells 15,16,17,18 */
+.home {
+  grid-column: 3 / span 4;
+  grid-row: 3;
+}
+
+/* New rule: Patient Summary spanning two rows */
+.double {
+  grid-row: span 2;
+}
+
+/* Remove composite card styles if not needed */
+/* .composite { ... } */
+/* .composite-left { ... } */
+/* .composite-right { ... } */
+
+/* Actions Card: Button Grid in 2x2 layout with circular buttons */
+.actions .button-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.actions .button-grid button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50% !important;
+  background-color: #555;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.actions .button-grid button:hover {
+  background-color: #777;
+}
+
+/* Actions Card: scale images to fixed size inside buttons */
+.actions .button-grid button img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+/* Utility: Span two columns with higher specificity */
+.grid-container .span2 {
+  grid-column: span 2 !important;
+}
+
+/* Composite Card: split into 75% (left) and 25% (right) with higher specificity */
+/* .grid-container .composite {
+  display: flex;
+  flex-direction: row;
+}
+.grid-container .composite > .composite-left {
+  flex: 3;
+  padding: 10px;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  text-align: left;
+}
+.grid-container .composite > .composite-right {
+  flex: 1;
+  padding: 10px;
+} */
+
+/* Updated action grid buttons to be circular */
+/* .grid-container .composite > .composite-right .button-grid button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50% !important;
+  background-color: #555;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.grid-container .composite > .composite-right .button-grid button:hover {
+  background-color: #777;
+} */
+
+/* Color Variations */
+.yellow {
+  background-color: #ffd700;
+}
+.blue {
+  background-color: #4682b4;
+}
+.red {
+  background-color: #ff6347;
+}
+.white {
+  background-color: #ffffff;
+  color: black;
+}
+.green {
+  background-color: #32cd32;
+}
+.teal {
+  background-color: #20b2aa;
+}
+.pink {
+  background-color: #ff69b4;
+}
+
+/* Fullspan for Home Remedies Card */
+.fullspan {
+  grid-column: span 2;
+}
+
+/* Buttons Card Grid */
+.buttons-card .button-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.buttons-card .button-grid button {
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #555;
+  color: #fff;
+  cursor: pointer;
+}
+.buttons-card .button-grid button:hover {
+  background-color: #777;
+}
+
+/* Icons */
+.icon {
+  font-size: 40px;
+  margin-top: 10px;
+}
+
+/* Edit Button */
+.edit-btn {
+  background-color: #000;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.edit-btn:hover {
+  background-color: #444;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .grid-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Increase height for row 2 cards */
+.appointment,
+.google {
+  min-height: 150px;
+}
+
+/* Increase height for row 3 cards */
+.natural,
+.home {
+  min-height: 150px;
 }

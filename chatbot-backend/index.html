@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serenity Chat Interface</title>
+    <style>
+        /* Base Styles */
+        * {
+            transition: all 0.3s ease;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            animation: gradientShift 20s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 60px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            border-right: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar a {
+            margin: 20px 0;
+            font-size: 24px;
+            color: #7FB3D5;
+            opacity: 0.8;
+            text-decoration: none;
+        }
+
+        .sidebar a:hover {
+            transform: scale(1.1);
+            opacity: 1;
+        }
+
+        /* Chat Container */
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            height: 93vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container {
+            flex-grow: 1;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            overflow-y: auto;
+        }
+
+        /* Messages */
+        .message {
+            margin: 15px 0;
+            padding: 15px 20px;
+            border-radius: 15px;
+            max-width: 70%;
+            line-height: 1.5;
+        }
+
+        .user-message {
+            background: #E8F4F8;
+            color: #2C3E50;
+            margin-left: auto;
+            border: 1px solid rgba(168, 218, 220, 0.3);
+        }
+
+        .bot-message {
+            background: #F5FBF2;
+            color: #2C3E50;
+            border: 1px solid rgba(199, 233, 192, 0.3);
+        }
+
+        /* Input Area */
+        .input-container {
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+        }
+
+        input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            color: #2C3E50;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        }
+
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #A8DADC;
+        }
+
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            background: #A8DADC;
+            color: #2C3E50;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: #88B7B5;
+            transform: translateY(-1px);
+        }
+
+        /* Floating Particles */
+        .particle {
+            position: fixed;
+            background: rgba(168, 218, 220, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Particles -->
+    <div id="particles"></div>
+
+    <!-- Calming Sidebar -->
+    <div class="sidebar">
+        <a href="#">🌿</a> <!-- Nature -->
+        <a href="#">💧</a> <!-- Water -->
+        <a href="#">🕊️</a> <!-- Peace -->
+        <a href="#">🎵</a> <!-- Music -->
+        <a href="#">🛋️</a> <!-- Comfort -->
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="main-content">
+        <div class="chat-container" id="chat-container">
+            <div class="message bot-message">
+                Welcome to a safe space. I'm here to listen 🌸
+            </div>
+        </div>
+        
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Express yourself freely...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        // Floating Particles Animation
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.width = Math.random() * 10 + 5 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.top = Math.random() * 100 + 'vh';
+                particle.style.animation = `float ${Math.random() * 10 + 10}s linear infinite`;
+                container.appendChild(particle);
+            }
+        }
+
+        // Send Message to Backend
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const chat = document.getElementById('chat-container');
+            
+            if (input.value.trim()) {
+                // Display user message
+                const userDiv = document.createElement('div');
+                userDiv.className = 'message user-message';
+                userDiv.textContent = input.value;
+                chat.appendChild(userDiv);
+
+                // Send query to backend
+                try {
+                    const response = await fetch('http://127.0.0.1:8000/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: input.value }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const data = await response.json();
+
+                    // Convert Markdown to HTML using marked.js
+                    const botResponseHtml = marked.parse(data.response);
+
+                    // Display bot response
+                    const botDiv = document.createElement('div');
+                    botDiv.className = 'message bot-message';
+                    botDiv.innerHTML = `
+                        <div style="color: #88B7B5; margin-bottom: 5px;">🌱 Response:</div>
+                        ${botResponseHtml}
+                    `;
+                    chat.appendChild(botDiv);
+                } catch (error) {
+                    console.error('Error:', error);
+                    const botDiv = document.createElement('div');
+                    botDiv.className = 'message bot-message';
+                    botDiv.textContent = 'Sorry, something went wrong. Please try again.';
+                    chat.appendChild(botDiv);
+                }
+
+                // Clear input and scroll to bottom
+                input.value = '';
+                chat.scrollTop = chat.scrollHeight;
+            }
+        }
+
+        // Initialize particles
+        createParticles();
+    </script>
+</body>
+</html>
