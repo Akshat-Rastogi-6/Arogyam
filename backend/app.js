@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-pool.connect((err) => {
+pool.query('SELECT NOW()', (err) => {
   if (err) {
     console.error("Database connection failed:", err.stack);
   } else {
