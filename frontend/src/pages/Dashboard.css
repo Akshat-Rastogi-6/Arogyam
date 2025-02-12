@@ -2,10 +2,10 @@
 .dashboard {
   padding: 2rem;
   font-family: "Inter", sans-serif;
-  background-color: #f8f9fa;
-  min-height: 100vh;
-  max-width: 1440px;
-  margin: 0 auto;
+  background: linear-gradient(to bottom, #ffffff, #e6f7ff); /* Soft blue gradient */
+  height: 100vh;
+  margin-top: 0rem;
+  width: 100vw;
 }
 
 .dashboard-header {
@@ -16,204 +16,141 @@
 
 .dashboard-header h1 {
   font-size: 2.5rem;
-  color: #2c3e50;
+  color: #1a73e8; /* Google blue */
   font-weight: 700;
   margin-bottom: 0.5rem;
 }
 
 .header-subtitle {
-  color: #6c757d;
+  color: #5f6368; /* Dark gray */
   font-size: 1.1rem;
 }
 
 /* Grid Layout */
-.dashboard-grid {
+.grid-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(3, auto);
   gap: 1.5rem;
   padding: 1rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 6rem auto;
 }
 
 /* Dashboard Cards */
-.dashboard-card {
+.card {
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   padding: 1.5rem;
   transition: all 0.3s ease;
   border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.dashboard-card:hover {
+.card:hover {
   transform: translateY(-5px);
   box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
 }
 
-.card-icon {
-  font-size: 2rem;
-  color: #3498db;
-  margin-bottom: 1rem;
-  display: inline-block;
-  padding: 0.5rem;
-  background: rgba(52, 152, 219, 0.1);
-  border-radius: 12px;
-}
-
-.dashboard-card h2 {
-  font-size: 1.25rem;
-  color: #2c3e50;
+.card h3 {
+  font-size: 1.70rem;
+  color: #202124; /* Dark gray */
   margin-bottom: 0.75rem;
   font-weight: 600;
 }
 
-.dashboard-card p {
+.card p {
   font-size: 0.95rem;
-  color: #6c757d;
+  color: #5f6368; /* Medium gray */
   line-height: 1.5;
-}
-
-@media (max-width: 768px) {
-  .dashboard {
-    padding: 1rem;
-  }
-
-  .dashboard-header h1 {
-    font-size: 2rem;
-  }
-
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* General Page Styles */
-body {
-  font-family: Arial, sans-serif;
-  background-color: #121212;
-  color: white;
-  margin: 0;
-  padding: 0;
-}
-
-/* Sidebar */
-.sidebar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  background-color: #2a2a2a;
-}
-
-/* Menu Button */
-.menu-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: white;
-  cursor: pointer;
-}
-
-/* Updated Grid Layout to 6 columns and 3 rows */
-.grid-container {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-template-rows: repeat(3, auto);
-  grid-gap: 15px;
-  padding: 20px;
-  width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
-}
-
-/* Utility: Span two columns */
-.span2 {
-  grid-column: span 2;
-}
-
-/* Card Styles */
-.card {
-  background-color: #333;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  font-size: 18px;
-  position: relative;
 }
 
 /* Patient Summary: cells 1,2,7,8 */
 .patient {
   grid-column: 1 / span 2;
   grid-row: 1 / span 2;
+  background-color: #a3d0fc; /* Light blue-gray */
 }
 
 /* Seasonal Tips: cells 3,4,5 */
 .seasonal {
   grid-column: 3 / span 3;
   grid-row: 1;
+  background-color: #bed6ff; /* Light blue */
 }
 
 /* Actions: cell 6 */
 .action {
   grid-column: 6;
   grid-row: 1;
+  background-color: #85b5fd; /* Soft blue */
 }
 
 /* Appointment Deadlines: cell 9 */
 .appointment {
-  grid-column: 3 / span 2 ;
+  grid-column: 3 / span 2;
   grid-row: 2;
+  background-color: #f9c2bd; /* Light red */
+  height: 18vh;
 }
 
 /* Google Fit Integration: cells 10,11,12 */
 .google {
-  position: relative;
-  grid-column: 5 / span 3;
+  grid-column: 5 / span 2;
   grid-row: 2;
+  background-color: #faeded; /* White */
+  color: #000;
+  position: relative;
 }
 
-/* Overlay fitness watch icon in the Google Fit card */
 .google .fitness-watch {
   position: absolute;
-  top: 0px;
-  right: -30px;
-  width: 110px;
-  height: 100%;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: auto;
 }
 
 /* Natural Therapy: cells 13,14 */
 .natural {
-  position: relative;
   grid-column: 1 / span 2;
   grid-row: 3;
+  background-color: #c0f6cf; /* Light green */
+  position: relative;
+  height: 25vh;
 }
 
-/* Overlay natural icon in the Natural Therapy card */
 .natural .natural-icon {
   position: absolute;
-  bottom: 0px;
-  left: -10px;
-  width: 150px;
-  height: 50%;
-  object-fit: contain;
+  bottom: 0;
+  top: 5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: auto;
 }
 
 /* Home Remedies: cells 15,16,17,18 */
 .home {
   grid-column: 3 / span 4;
   grid-row: 3;
+  background-color: #ddbbfd; /* Light purple */
+  position: relative;
+  overflow: hidden;
 }
 
-/* New rule: Patient Summary spanning two rows */
-.double {
-  grid-row: span 2;
+.home .home-remedies-icon {
+  position: absolute;
+  top: 50%; /* Adjust this value to move the icon vertically */
+  left: 50%; /* Adjust this value to move the icon horizontally */
+  transform: translate(100%, -50%); /* Centers the icon */
+  width: 100px; /* Adjust the width as needed */
+  height: auto; /* Maintains aspect ratio */
+  max-height: 80%; /* Ensures the icon doesn't exceed the container height */
 }
-
-/* Remove composite card styles if not needed */
-/* .composite { ... } */
-/* .composite-left { ... } */
-/* .composite-right { ... } */
 
 /* Actions Card: Button Grid in 2x2 layout with circular buttons */
 .actions .button-grid {
@@ -221,152 +158,108 @@ body {
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
 }
+
 .actions .button-grid button {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   padding: 0;
-  border-radius: 50% !important;
-  background-color: #555;
+  border-radius: 50%;
+  background-color: #1a73e8; /* Google blue */
   color: #fff;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-}
-.actions .button-grid button:hover {
-  background-color: #777;
+  transition: background-color 0.3s ease;
 }
 
-/* Actions Card: scale images to fixed size inside buttons */
+.actions .button-grid button:hover {
+  background-color: #1557b0; /* Darker blue */
+}
+
 .actions .button-grid button img {
   width: 24px;
   height: 24px;
   object-fit: contain;
 }
 
-/* Utility: Span two columns with higher specificity */
-.grid-container .span2 {
-  grid-column: span 2 !important;
-}
-
-/* Composite Card: split into 75% (left) and 25% (right) with higher specificity */
-/* .grid-container .composite {
-  display: flex;
-  flex-direction: row;
-}
-.grid-container .composite > .composite-left {
-  flex: 3;
-  padding: 10px;
-  border-right: 1px solid rgba(255, 255, 255, 0.3);
-  text-align: left;
-}
-.grid-container .composite > .composite-right {
-  flex: 1;
-  padding: 10px;
-} */
-
-/* Updated action grid buttons to be circular */
-/* .grid-container .composite > .composite-right .button-grid button {
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border-radius: 50% !important;
-  background-color: #555;
-  color: #fff;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.grid-container .composite > .composite-right .button-grid button:hover {
-  background-color: #777;
-} */
-
-/* Color Variations */
-.yellow {
-  background-color: #ffd700;
-}
-.blue {
-  background-color: #4682b4;
-}
-.red {
-  background-color: #ff6347;
-}
-.white {
-  background-color: #ffffff;
-  color: black;
-}
-.green {
-  background-color: #32cd32;
-}
-.teal {
-  background-color: #20b2aa;
-}
-.pink {
-  background-color: #ff69b4;
-}
-
-/* Fullspan for Home Remedies Card */
-.fullspan {
-  grid-column: span 2;
-}
-
-/* Buttons Card Grid */
-.buttons-card .button-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-.buttons-card .button-grid button {
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  background-color: #555;
-  color: #fff;
-  cursor: pointer;
-}
-.buttons-card .button-grid button:hover {
-  background-color: #777;
-}
-
-/* Icons */
-.icon {
-  font-size: 40px;
-  margin-top: 10px;
-}
-
 /* Edit Button */
 .edit-btn {
-  background-color: #000;
+  background-color: #1a73e8; /* Google blue */
   color: white;
   border: none;
-  padding: 5px 10px;
-  border-radius: 5px;
-  margin-top: 10px;
+  padding: 20px 16px;
+  border-radius: 12px;
+  margin: 10px 1.5rem;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 1.25rem;
 }
 
 .edit-btn:hover {
-  background-color: #444;
+  background-color: #1557b0; /* Darker blue */
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .grid-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: auto;
+  }
+
+  .patient {
+    grid-column: 1 / span 4;
+    grid-row: 1;
+  }
+
+  .seasonal {
+    grid-column: 1 / span 4;
+    grid-row: 2;
+  }
+
+  .action {
+    grid-column: 1 / span 4;
+    grid-row: 3;
+  }
+
+  .appointment {
+    grid-column: 1 / span 4;
+    grid-row: 4;
+  }
+
+  .google {
+    grid-column: 1 / span 4;
+    grid-row: 5;
+  }
+
+  .natural {
+    grid-column: 1 / span 4;
+    grid-row: 6;
+  }
+
+  .home {
+    grid-column: 1 / span 4;
+    grid-row: 7;
   }
 }
 
-/* Increase height for row 2 cards */
-.appointment,
-.google {
-  min-height: 150px;
-}
+@media (max-width: 768px) {
+  .grid-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
 
-/* Increase height for row 3 cards */
-.natural,
-.home {
-  min-height: 150px;
+  .card {
+    grid-column: 1 / span 1 !important;
+    grid-row: auto !important;
+  }
+
+  .dashboard-header h1 {
+    font-size: 2rem;
+  }
+
+  .dashboard {
+    padding: 1rem;
+  }
 }
