@@ -1,127 +1,177 @@
 import React, { useEffect, useState } from "react";
 import { getPatientDetails, updatePatientDetails } from "../api/patient";
+import { generatePatientSummary } from "../services/geminiService";
 import "./UserDetailsForm.css";
 
 const UserDetailsForm = () => {
+  const [summary, setSummary] = useState("Loading Patient Summary..");
   const [formData, setFormData] = useState({
     // ... your existing formData state ...
     // Basic Information
-    firstName: '',
-    lastName: '',
-    address: '',
-    city: '',
-    state: '',
-    pincode: '',
-    phoneNumber: '',
-    
+    firstName: "",
+    lastName: "",
+    address: "",
+    city: "",
+    state: "",
+    pincode: "",
+    phoneNumber: "",
+
     // Health Information
-    age: '',
-    gender_identity: '',
-    height: '',
-    weight: '',
-    blood_type: '',
-      // Lifestyle Habits
-      smokes: false,
-      cigarettes_per_day: '',
-      alcohol: false,
-      drinks_per_week: '',
-      recreational_drugs: false,
-      drug_details: '',
-      exercise_frequency: '',
-      diet_description: '',
-      sleep_hours: '',
-      stress_level: '',
-      
-      // Medical History
-      chronic_conditions: '',
-      medications: '',
-      allergies: '',
-      surgeries: '',
-      family_history: '',
-      mental_health_conditions: '',
-      
-      // Regular Checkups
-      last_checkup: '',
-      vaccinations_up_to_date: false,
-      dental_checkups: '',
-     // Male-Specific Health
-     sexual_performance_issues: false,
-     libido_concerns: false,
-     testicular_pain_lumps: false,
-     urination_issues: false,
-     prostate_exam: '',
-     hair_loss_concerns: false,
-     
-     // Female-Specific Health
-     menstrual_start_age: '',
-     menstrual_regular: false,
-     severe_cramps: false,
-     heavy_bleeding: false,
-     pregnancy_status: false,
-     pregnancy_count: '',
-     pregnancy_complications: '',
-     menopause_symptoms: false,
-     menopause_start_age: '',
-     breast_self_exam: false,
-     last_mammogram: '',
-     breast_changes: false,
-     last_pap_smear: '',
-     gynecological_conditions: ''
-   });
+    age: "",
+    gender_identity: "",
+    height: "",
+    weight: "",
+    blood_type: "",
+    // Lifestyle Habits
+    smokes: false,
+    cigarettes_per_day: "",
+    alcohol: false,
+    drinks_per_week: "",
+    recreational_drugs: false,
+    drug_details: "",
+    exercise_frequency: "",
+    diet_description: "",
+    sleep_hours: "",
+    stress_level: "",
 
-   const [loading, setLoading] = useState(false);
-   const [message, setMessage] = useState("");
- 
-   useEffect(() => {
-     const fetchPatientDetails = async () => {
-       setLoading(true);
-       try {
-         const response = await getPatientDetails();
-         console.log("API Response:", response); // Debug log
-         
-         if (response.data?.patient) {
-           // Map backend data to form fields
-           const patientData = response.data.patient;
-           const healthInfo = patientData.healthInfo || {};
-           
-           setFormData(prevData => ({
-             ...prevData,
-             firstName: patientData.first_name || '',
-             lastName: patientData.last_name || '',
-             address: patientData.address || '',
-             city: patientData.city || '',
-             state: patientData.state || '',
-             pincode: patientData.pincode || '',
-             phoneNumber: patientData.phone_number || '',
-             ...healthInfo
-           }));
+    // Medical History
+    chronic_conditions: "",
+    medications: "",
+    allergies: "",
+    surgeries: "",
+    family_history: "",
+    mental_health_conditions: "",
+
+    // Regular Checkups
+    last_checkup: "",
+    vaccinations_up_to_date: false,
+    dental_checkups: "",
+    // Male-Specific Health
+    sexual_performance_issues: false,
+    libido_concerns: false,
+    testicular_pain_lumps: false,
+    urination_issues: false,
+    prostate_exam: "",
+    hair_loss_concerns: false,
+
+    // Female-Specific Health
+    menstrual_start_age: "",
+    menstrual_regular: false,
+    severe_cramps: false,
+    heavy_bleeding: false,
+    pregnancy_status: false,
+    pregnancy_count: "",
+    pregnancy_complications: "",
+    menopause_symptoms: false,
+    menopause_start_age: "",
+    breast_self_exam: false,
+    last_mammogram: "",
+    breast_changes: false,
+    last_pap_smear: "",
+    gynecological_conditions: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const fetchPatientDetails = async () => {
+      setLoading(true);
+      try {
+        const response = await getPatientDetails();
+        console.log("API Response:", response); // Debug log
+
+        if (response.data?.patient) {
+          // Map backend data to form fields
+          const patientData = response.data.patient;
+          const healthInfo = patientData.healthInfo || {};
+
+          setFormData((prevData) => ({
+            ...prevData,
+            firstName: patientData.first_name || "",
+            lastName: patientData.last_name || "",
+            address: patientData.address || "",
+            city: patientData.city || "",
+            state: patientData.state || "",
+            pincode: patientData.pincode || "",
+            phoneNumber: patientData.phone_number || "",
+            ...healthInfo,
+            summaryInfo: patientData.summaryInfo || "",
+          }));
         }
-    } catch (error) {
-      console.error("Error fetching patient details:", error.response || error);
-      setMessage(error.response?.data?.message || "Error fetching patient details");
-    }
-    setLoading(false);
-  };
+      } catch (error) {
+        console.error(
+          "Error fetching patient details:",
+          error.response || error
+        );
+        setMessage(
+          error.response?.data?.message || "Error fetching patient details"
+        );
+      }
+      setLoading(false);
+    };
 
-  fetchPatientDetails();
-}, []);
+    fetchPatientDetails();
+  }, []);
 
-const handleChange = (e) => {
+  const handleChange = (e) => {
     const { name, value, type } = e.target;
-    
-    if (type === 'select-one' && (value === 'true' || value === 'false')) {
-      setFormData(prevData => ({
+
+    if (type === "select-one" && (value === "true" || value === "false")) {
+      setFormData((prevData) => ({
         ...prevData,
-        [name]: value === 'true'
+        [name]: value === "true",
       }));
       return;
     }
 
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
-      [name]: value
+      [name]: value,
     }));
   };
+
+  const prompt = `
+      **Patient Health Summary**
+      
+      **Basic Information**  
+      Name: ${formData.firstName} ${formData.lastName} | Age: ${
+    formData.age
+  } | Gender: ${formData.gender_identity}  
+      Blood Type: ${formData.blood_type} | Address: ${formData.city}, ${
+    formData.state
+  }  
+      
+      **Vital Health Metrics**  
+      Height: ${formData.height} cm | Weight: ${formData.weight} kg | BMI: ${(
+    formData.weight /
+    (formData.height / 100) ** 2
+  ).toFixed(2)}  
+      Chronic Conditions: ${formData.chronic_conditions || "None"}  
+      Medications: ${formData.medications || "None"} | Allergies: ${
+    formData.allergies || "None"
+  }  
+      Past Surgeries: ${formData.surgeries || "None"}  
+
+      **Lifestyle & Wellness**  
+      Smokes: ${formData.smokes ? "Yes" : "No"} | Alcohol: ${
+    formData.alcohol ? "Yes" : "No"
+  }  
+      Exercise: ${formData.exercise_frequency} | Sleep: ${
+    formData.sleep_hours
+  } hrs/night | Stress Level: ${formData.stress_level}  
+
+      **Medical History & Checkups**  
+      Last Checkup: ${formData.last_checkup || "Not Provided"}  
+      Vaccinations Up to Date: ${
+        formData.vaccinations_up_to_date ? "Yes" : "No"
+      }  
+      Family Medical History: ${formData.family_history || "Not Provided"}  
+      Mental Health Conditions: ${formData.mental_health_conditions || "None"}  
+
+      **Health Summary & Insights**  
+      Generate a concise medical summary for the patient based on their health records, lifestyle habits, and family history.  
+    `;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -129,11 +179,33 @@ const handleChange = (e) => {
     setMessage("");
 
     try {
-      console.log("Submitting form data:", formData); // Debug log
-      
-      const response = await updatePatientDetails(formData);
-      console.log("Update response:", response); // Debug log
-      
+      // First generate the summary and wait for it
+      const generatedSummary = await generatePatientSummary(prompt).catch(
+        (error) => {
+          console.error("Gemini API error:", error);
+          return "Stay healthy and enjoy your day!"; // Fallback summary
+        }
+      );
+
+      // Update state with the generated summary
+      setSummary(generatedSummary);
+
+      // Add slight delay to ensure state updates
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      console.log("Submitting form data:", {
+        ...formData,
+        summary: generatedSummary,
+      });
+
+      // Submit with the freshly generated summary
+      const response = await updatePatientDetails({
+        ...formData,
+        summary: generatedSummary, // Use direct value instead of state
+      });
+
+      console.log("Update response:", response);
+
       if (response.data?.success) {
         setMessage("Details updated successfully!");
       } else {
@@ -332,7 +404,11 @@ const handleChange = (e) => {
       )}
       <div>
         <label>Recreational Drugs?</label>
-        <select name="recreational_drugs" value={formData.recreational_drugs} onChange={handleChange}>
+        <select
+          name="recreational_drugs"
+          value={formData.recreational_drugs}
+          onChange={handleChange}
+        >
           <option value={false}>No</option>
           <option value={true}>Yes</option>
         </select>
@@ -350,7 +426,11 @@ const handleChange = (e) => {
       )}
       <div>
         <label>Exercise Frequency</label>
-        <select name="exercise_frequency" value={formData.exercise_frequency} onChange={handleChange}>
+        <select
+          name="exercise_frequency"
+          value={formData.exercise_frequency}
+          onChange={handleChange}
+        >
           <option value="">Select</option>
           <option value="never">Never</option>
           <option value="rarely">Rarely</option>
@@ -381,7 +461,11 @@ const handleChange = (e) => {
       </div>
       <div>
         <label>Stress Level</label>
-        <select name="stress_level" value={formData.stress_level} onChange={handleChange}>
+        <select
+          name="stress_level"
+          value={formData.stress_level}
+          onChange={handleChange}
+        >
           <option value="">Select</option>
           <option value="low">Low</option>
           <option value="moderate">Moderate</option>
@@ -458,7 +542,11 @@ const handleChange = (e) => {
       </div>
       <div>
         <label>Vaccinations Up to Date?</label>
-        <select name="vaccinations_up_to_date" value={formData.vaccinations_up_to_date} onChange={handleChange}>
+        <select
+          name="vaccinations_up_to_date"
+          value={formData.vaccinations_up_to_date}
+          onChange={handleChange}
+        >
           <option value={false}>No</option>
           <option value={true}>Yes</option>
         </select>
@@ -473,33 +561,49 @@ const handleChange = (e) => {
         />
       </div>
 
-      {formData.gender_identity === 'male' && (
+      {formData.gender_identity === "male" && (
         <>
           <h2>Male-Specific Health</h2>
           <div>
             <label>Sexual Performance Issues?</label>
-            <select name="sexual_performance_issues" value={formData.sexual_performance_issues} onChange={handleChange}>
+            <select
+              name="sexual_performance_issues"
+              value={formData.sexual_performance_issues}
+              onChange={handleChange}
+            >
               <option value={false}>No</option>
               <option value={true}>Yes</option>
             </select>
           </div>
           <div>
             <label>Libido Concerns?</label>
-            <select name="libido_concerns" value={formData.libido_concerns} onChange={handleChange}>
+            <select
+              name="libido_concerns"
+              value={formData.libido_concerns}
+              onChange={handleChange}
+            >
               <option value={false}>No</option>
               <option value={true}>Yes</option>
             </select>
           </div>
           <div>
             <label>Testicular Pain/Lumps?</label>
-            <select name="testicular_pain_lumps" value={formData.testicular_pain_lumps} onChange={handleChange}>
+            <select
+              name="testicular_pain_lumps"
+              value={formData.testicular_pain_lumps}
+              onChange={handleChange}
+            >
               <option value={false}>No</option>
               <option value={true}>Yes</option>
             </select>
           </div>
           <div>
             <label>Urination Issues?</label>
-            <select name="urination_issues" value={formData.urination_issues} onChange={handleChange}>
+            <select
+              name="urination_issues"
+              value={formData.urination_issues}
+              onChange={handleChange}
+            >
               <option value={false}>No</option>
               <option value={true}>Yes</option>
             </select>
@@ -515,7 +619,11 @@ const handleChange = (e) => {
           </div>
           <div>
             <label>Hair Loss Concerns?</label>
-            <select name="hair_loss_concerns" value={formData.hair_loss_concerns} onChange={handleChange}>
+            <select
+              name="hair_loss_concerns"
+              value={formData.hair_loss_concerns}
+              onChange={handleChange}
+            >
               <option value={false}>No</option>
               <option value={true}>Yes</option>
             </select>
@@ -523,7 +631,7 @@ const handleChange = (e) => {
         </>
       )}
 
-      {formData.gender_identity === 'female' && (
+      {formData.gender_identity === "female" && (
         <>
           <h2>Female-Specific Health</h2>
           <div>
@@ -539,28 +647,44 @@ const handleChange = (e) => {
           </div>
           <div>
             <label>Regular Menstrual Cycle?</label>
-            <select name="menstrual_regular" value={formData.menstrual_regular} onChange={handleChange}>
+            <select
+              name="menstrual_regular"
+              value={formData.menstrual_regular}
+              onChange={handleChange}
+            >
               <option value={false}>No</option>
               <option value={true}>Yes</option>
             </select>
           </div>
           <div>
             <label>Severe Menstrual Cramps?</label>
-            <select name="severe_cramps" value={formData.severe_cramps} onChange={handleChange}>
+            <select
+              name="severe_cramps"
+              value={formData.severe_cramps}
+              onChange={handleChange}
+            >
               <option value={false}>No</option>
               <option value={true}>Yes</option>
             </select>
           </div>
           <div>
             <label>Heavy Menstrual Bleeding?</label>
-            <select name="heavy_bleeding" value={formData.heavy_bleeding} onChange={handleChange}>
+            <select
+              name="heavy_bleeding"
+              value={formData.heavy_bleeding}
+              onChange={handleChange}
+            >
               <option value={false}>No</option>
               <option value={true}>Yes</option>
             </select>
           </div>
           <div>
             <label>Currently Pregnant?</label>
-            <select name="pregnancy_status" value={formData.pregnancy_status} onChange={handleChange}>
+            <select
+              name="pregnancy_status"
+              value={formData.pregnancy_status}
+              onChange={handleChange}
+            >
               <option value={false}>No</option>
               <option value={true}>Yes</option>
             </select>
@@ -586,7 +710,11 @@ const handleChange = (e) => {
           </div>
           <div>
             <label>Menopause Symptoms?</label>
-            <select name="menopause_symptoms" value={formData.menopause_symptoms} onChange={handleChange}>
+            <select
+              name="menopause_symptoms"
+              value={formData.menopause_symptoms}
+              onChange={handleChange}
+            >
               <option value={false}>No</option>
               <option value={true}>Yes</option>
             </select>
@@ -606,7 +734,11 @@ const handleChange = (e) => {
           )}
           <div>
             <label>Regular Breast Self-Exam?</label>
-            <select name="breast_self_exam" value={formData.breast_self_exam} onChange={handleChange}>
+            <select
+              name="breast_self_exam"
+              value={formData.breast_self_exam}
+              onChange={handleChange}
+            >
               <option value={false}>No</option>
               <option value={true}>Yes</option>
             </select>
@@ -622,7 +754,11 @@ const handleChange = (e) => {
           </div>
           <div>
             <label>Breast Changes?</label>
-            <select name="breast_changes" value={formData.breast_changes} onChange={handleChange}>
+            <select
+              name="breast_changes"
+              value={formData.breast_changes}
+              onChange={handleChange}
+            >
               <option value={false}>No</option>
               <option value={true}>Yes</option>
             </select>
@@ -651,7 +787,11 @@ const handleChange = (e) => {
       <button type="submit" disabled={loading}>
         {loading ? "Updating..." : "Update Details"}
       </button>
-      {message && <p className={message.includes("success") ? "success" : "error"}>{message}</p>}
+      {message && (
+        <p className={message.includes("success") ? "success" : "error"}>
+          {message}
+        </p>
+      )}
     </form>
   );
 };
