@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { getPatientDetails, updatePatientDetails } from "../api/patient";
-import { generatePatientSummary } from "../services/geminiService";
 import "./UserDetailsForm.css";
 
 const UserDetailsForm = () => {
-  const [summary, setSummary] = useState("Generating Summary...");
   const [formData, setFormData] = useState({
     // ... your existing formData state ...
     // Basic Information
@@ -108,39 +106,6 @@ const UserDetailsForm = () => {
   fetchPatientDetails();
 }, []);
 
-const prompt = `
-**Patient Health Summary**
-
-**Basic Information**  
-Name: ${formData.firstName} ${formData.lastName} | Age: ${formData.age} | Gender: ${formData.gender_identity}  
-Blood Type: ${formData.blood_type} | Address: ${formData.city}, ${formData.state}  
-
-**Vital Health Metrics**  
-Height: ${formData.height} cm | Weight: ${formData.weight} kg | BMI: ${(formData.weight / ((formData.height / 100) ** 2)).toFixed(2)}  
-Chronic Conditions: ${formData.chronic_conditions || "None"}  
-Medications: ${formData.medications || "None"} | Allergies: ${formData.allergies || "None"}  
-Past Surgeries: ${formData.surgeries || "None"}  
-
-**Lifestyle & Wellness**  
-Smokes: ${formData.smokes ? "Yes" : "No"} | Alcohol: ${formData.alcohol ? "Yes" : "No"}  
-Exercise: ${formData.exercise_frequency} | Sleep: ${formData.sleep_hours} hrs/night | Stress Level: ${formData.stress_level}  
-
-**Medical History & Checkups**  
-Last Checkup: ${formData.last_checkup || "Not Provided"}  
-Vaccinations Up to Date: ${formData.vaccinations_up_to_date ? "Yes" : "No"}  
-Family Medical History: ${formData.family_history || "Not Provided"}  
-Mental Health Conditions: ${formData.mental_health_conditions || "None"}  
-
-**Current Weather Conditions**  
-Temperature: ${temp}°C | Humidity: ${humidity}% | Condition: ${condition}  
-Rain: ${rainVolume}mm | Snow: ${snowVolume}mm | Wind Speed: ${windSpeed}m/s  
-
-**Health Summary & Insights**  
-Generate a concise medical summary for the patient based on their health records, lifestyle habits, and family history.  
-`;
-
-
-
 const handleChange = (e) => {
     const { name, value, type } = e.target;
     
@@ -163,21 +128,10 @@ const handleChange = (e) => {
     setLoading(true);
     setMessage("");
 
-
-    generatePatientSummary(prompt)
-      .then((generatedSummary) => {
-      setSummary(generatedSummary || "Not enough data!");
-    })
-    .catch((error) => {
-      console.error("Gemini API error:", error);
-      setSummary("Unable to get user summary from Gemini API.");
-    });
-    
-
     try {
       console.log("Submitting form data:", formData); // Debug log
       
-      const response = await updatePatientDetails(formData, summary);
+      const response = await updatePatientDetails(formData);
       console.log("Update response:", response); // Debug log
       
       if (response.data?.success) {
@@ -195,7 +149,6 @@ const handleChange = (e) => {
   if (loading) {
     return <div className="loading-spinner"></div>;
   }
-
 
   return (
     <form className="user-details-form" onSubmit={handleSubmit}>

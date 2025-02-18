@@ -350,6 +350,8 @@ export const getUserInfoDetails = async (req, res) => {
     const summaryInfo = (
       await pool.query("SELECT * FROM patient_summary WHERE patient_id = $1", [req.patientId])  
     ).rows[0] || {};
+
+    const { summary_data } = summaryInfo;
     
 
     // console.log("✅ Retrieved Health Info:", healthInfo);
@@ -361,7 +363,7 @@ export const getUserInfoDetails = async (req, res) => {
       patient: {
         ...patientDetails,
         healthInfo,
-        summaryInfo,
+        summary_data,
       },
     });
   } catch (error) {
