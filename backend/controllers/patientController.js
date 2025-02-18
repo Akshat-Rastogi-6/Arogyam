@@ -121,23 +121,25 @@ const getGoogleFitData = async (googleFitToken, googleRefreshToken) => {
     return null;
   }
 };
-const updateGoogleFitHourlyData = async (req, res) => {
+const updateGoogleFitHourlyData = async (patientId, googleFitToken, googleRefreshToken) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM patients WHERE id = $1", [req.patientId]);
+    const { rows } = await pool.query("SELECT * FROM patients WHERE id = $1", [patientId]);
     if (!rows.length) {
-      return res.status(404).json({ success: false, message: "Patient not found" });
+      console.error(`Patient ${patientId} not found`);
+      return;
     }
+
     const now = new Date();
     const currentHour = now.getHours();
 
     // Fetch Google Fit data
     const googleFitData = await getGoogleFitData(googleFitToken, googleRefreshToken);
     if (!googleFitData) {
-      console.error("Error fetching Google Fit data");
-      return res.status(500).json({ success: false, message: "Failed to fetch Google Fit data" });
+      console.error(`Failed to fetch Google Fit data for patient ${patientId}`);
+      return;
     }
 
-    // Handle missing or null data by providing default values
+    // Handle missing data with defaults
     const {
       stepsWalked = 0,
       caloriesBurned = 0,
@@ -156,12 +158,12 @@ const updateGoogleFitHourlyData = async (req, res) => {
       exerciseMinutes = 0,
     } = googleFitData;
 
-    // Update the corresponding hour in the database
+    // Update database
     await pool.query(
       `INSERT INTO google_fit_hourly_data (
-        patient_id, hour, steps_walked, calories_burned, distance_walked, recent_heart_rate, recent_spo2,
-        systolic, diastolic, active_minutes, floors_climbed, sleep_duration, body_fat_percentage,
-        body_mass_index, water_intake, active_energy, exercise_minutes
+        patient_id, hour, steps_walked, calories_burned, distance_walked, recent_heart_rate, 
+        recent_spo2, systolic, diastolic, active_minutes, floors_climbed, sleep_duration, 
+        body_fat_percentage, body_mass_index, water_intake, active_energy, exercise_minutes
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       ON CONFLICT (patient_id, hour) DO UPDATE SET
         steps_walked = EXCLUDED.steps_walked,
@@ -181,7 +183,7 @@ const updateGoogleFitHourlyData = async (req, res) => {
         exercise_minutes = EXCLUDED.exercise_minutes,
         updated_at = CURRENT_TIMESTAMP`,
       [
-        req.patientId,
+        patientId,
         currentHour,
         stepsWalked,
         caloriesBurned,
@@ -201,18 +203,37 @@ const updateGoogleFitHourlyData = async (req, res) => {
       ]
     );
 
-    console.log(`Google Fit data updated for patient ${req.patientId} at hour ${currentHour}`);
-    res.status(200).json({ success: true, message: "Google Fit data updated" });
+    console.log(`Updated Google Fit data for patient ${patientId} at hour ${currentHour}`);
   } catch (error) {
-    console.error("Error updating Google Fit hourly data:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error(`Error updating patient ${patientId}:`, error.message);
   }
 };
 
-// Schedule the task to run every hour
-cron.schedule("0 * * * *", () => {
-  console.log("Running hourly Google Fit data update...");
-  updateGoogleFitHourlyData();
+// Scheduled job to run every hour
+cron.schedule("0 * * * *", async () => {
+  console.log("Initiating hourly Google Fit sync...");
+  try {
+    const { rows } = await pool.query(
+      "SELECT id, google_fit_token, google_refresh_token FROM patients WHERE google_fit_token IS NOT NULL"
+    );
+
+    if (rows.length === 0) {
+      console.log("No patients with Google Fit tokens found");
+      return;
+    }
+
+    console.log(`Processing ${rows.length} patients...`);
+    for (const patient of rows) {
+      await updateGoogleFitHourlyData(
+        patient.id,
+        patient.google_fit_token,
+        patient.google_refresh_token
+      );
+    }
+    console.log("Hourly sync completed");
+  } catch (error) {
+    console.error("Cron job failed:", error.message);
+  }
 });
 
 export const getGoogleFit = async (req, res) => {
@@ -324,6 +345,11 @@ export const getUserInfoDetails = async (req, res) => {
     const healthInfo = (
       await pool.query("SELECT * FROM patient_info WHERE patient_id = $1", [req.patientId])
     ).rows[0] || {};
+
+    //Fetch summary info
+    const summaryInfo = (
+      await pool.query("SELECT * FROM patient_summary WHERE patient_id = $1", [req.patientId])  
+    ).rows[0] || {};
     
 
     // console.log("✅ Retrieved Health Info:", healthInfo);
@@ -335,6 +361,7 @@ export const getUserInfoDetails = async (req, res) => {
       patient: {
         ...patientDetails,
         healthInfo,
+        summaryInfo,
       },
     });
   } catch (error) {
@@ -344,7 +371,7 @@ export const getUserInfoDetails = async (req, res) => {
 
 
 export const updatePatientDetails = async (req, res) => {
-  const { firstName, lastName, address, city, state, pincode, phoneNumber, ...healthInfo } = req.body;
+  const { firstName, lastName, address, city, state, pincode, phoneNumber,summary,  ...healthInfo } = req.body;
 
   try {
     const result = await pool.query('SELECT * FROM patients WHERE id = $1', [req.patientId]);
@@ -371,6 +398,29 @@ export const updatePatientDetails = async (req, res) => {
       ]
     );
 
+    const summaryResult = await pool.query('SELECT * FROM patient_summary WHERE patient_id = $1', [req.patientId]);
+    if (summaryResult.rows.length > 0) {
+      // Update existing health record
+      await pool.query(
+        `UPDATE patient_info
+         SET summary_data = $1
+         WHERE patient_id = $2`,
+        [summary, req.patientId]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO patient_summary (
+          patient_id, summary_data
+        ) VALUES (
+          $1, $2
+        )`,
+        [
+          req.patientId,
+          summary
+        ]
+      );
+    }
+
     // Check if patient_info exists
     const healthResult = await pool.query('SELECT * FROM patient_info WHERE patient_id = $1', [req.patientId]);
     if (healthResult.rows.length > 0) {
@@ -390,7 +440,7 @@ export const updatePatientDetails = async (req, res) => {
             gynecological_conditions = $42
         WHERE patient_id = $43`,
         [
-          healthInfo.age || healthResult.rows[0].age,
+          healthInfo.age ? parseInt(healthInfo.age, 10) : null,
           healthInfo.gender_identity || healthResult.rows[0].gender_identity,
           healthInfo.height || healthResult.rows[0].height,
           healthInfo.weight || healthResult.rows[0].weight,

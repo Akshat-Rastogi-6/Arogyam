@@ -13,3 +13,15 @@ export async function generateHealthTip(prompt) {
     throw error;
   }
 }
+
+export async function generatePatientSummary(prompt) {
+  try {
+    const result = await model.generateContent(prompt);
+    return result.response.text();
+  } catch (error) {
+    console.error("Gemini API error:", error);
+    throw error;
+  }
+}
+
+
