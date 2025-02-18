@@ -1,5 +1,5 @@
 import express from 'express';
-import { getGoogleFit, getPatientDetails, getUserInfoDetails, updatePatientDetails } from '../controllers/patientController.js';
+import { getGoogleFit, getPatientDetails, getUserInfoDetails, getPatientSummary, updatePatientDetails } from '../controllers/patientController.js';
 import { verifyToken } from "../middlewares/authentication.js";
 
 const router = express.Router();
@@ -10,6 +10,8 @@ router.put('/info', verifyToken, updatePatientDetails);
 
 router.get('/googlefit', verifyToken, getGoogleFit);
 
-router.get('/info', verifyToken, getUserInfoDetails)
+router.get('/summary', verifyToken, getPatientSummary);
+
+router.get('/info', verifyToken, getUserInfoDetails);
 
 export default router;

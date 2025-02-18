@@ -369,6 +369,25 @@ export const getUserInfoDetails = async (req, res) => {
   }
 }
 
+export const getPatientSummary = async (req, res) => {
+  try{
+    const { rows } = await pool.query("SELECT * FROM patient_summary WHERE patient_id = $1", [req.patientId]);
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: "Patient not found" });
+    }
+
+    //Fetch summary info
+    const summaryInfo = (
+      await pool.query("SELECT * FROM patient_summary WHERE patient_id = $1", [req.patientId])  
+    ).rows[0] || {};
+
+    return res.status(200).json({ success: true, summaryInfo });
+
+  } catch(error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+} 
+
 
 export const updatePatientDetails = async (req, res) => {
   const { firstName, lastName, address, city, state, pincode, phoneNumber,summary,  ...healthInfo } = req.body;
