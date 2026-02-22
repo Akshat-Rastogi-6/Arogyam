@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import PropTypes from 'prop-types';
 import axios from 'axios';
 import './OnboardingModal.css';
 
@@ -197,6 +197,11 @@ const OnboardingModal = ({ onComplete, onSkip }) => {
       </div>
     </div>
   );
+};
+
+OnboardingModal.propTypes = {
+  onComplete: PropTypes.func.isRequired,
+  onSkip: PropTypes.func.isRequired,
 };
 
 export default OnboardingModal;

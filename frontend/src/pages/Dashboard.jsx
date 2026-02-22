@@ -1,29 +1,25 @@
-import React, { useState, useEffect } from "react"; // modified import
-import { useNavigate, Link } from "react-router-dom";
-import axios from "axios"; // added import
-import "./Dashboard.module.css";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import "./Dashboard.css";
 
 // Image Imports
 import naturalIcon from "../public/images/dashboard/Protecting your health with natural remedies.png";
-import homeRemediesIcon from "../public/images/dashboard/Home Solutions and Home Improvement.png";
 
 // Component Imports
 import Navbar from "../components/Navbar.jsx";
-import WeatherTip from "../components/WeatherTip.jsx"; // new import
+import WeatherTip from "../components/WeatherTip.jsx";
 import OnboardingModal from "../components/OnboardingModal.jsx";
 
 // Lottie Animation Imports
 import Lottie from "lottie-react";
 import UserProfile from "../public/images/UserProfile.json";
-import GoogleFit from "../public/images/GoogleFit.json";
-import Disease from "../public/images/Disease.json";
 import Chatbot from "../public/images/Chatbot.json";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   // added state for Google Fit data
   const [googleFitData, setGoogleFitData] = useState(null);
-  const [loadingGoogleFit, setLoadingGoogleFit] = useState(true);
 
   // added state for user profile to get appointment dates
   const [profile, setProfile] = useState(null);
@@ -35,7 +31,6 @@ const Dashboard = () => {
     if (cachedGoogleFit) {
       try {
         setGoogleFitData(JSON.parse(cachedGoogleFit));
-        setLoadingGoogleFit(false);
       } catch (e) {
         console.error('Error parsing cached Google Fit data', e);
       }
@@ -52,8 +47,6 @@ const Dashboard = () => {
         localStorage.setItem('googleFitData', JSON.stringify(freshData));
       } catch (error) {
         console.error("Error fetching Google Fit data", error);
-      } finally {
-        setLoadingGoogleFit(false);
       }
     }
     fetchGoogleFit();
@@ -90,12 +83,6 @@ const Dashboard = () => {
   // Check onboarding status
   useEffect(() => {
     const checkOnboarding = async () => {
-      {showOnboarding && (
-        <OnboardingModal
-          onComplete={() => setShowOnboarding(false)}
-          onSkip={() => setShowOnboarding(false)}
-        />
-      )}
       try {
         const response = await axios.get("http://localhost:5001/api/health/onboarding", {
           withCredentials: true,
@@ -113,13 +100,19 @@ const Dashboard = () => {
   return (
     <>
       <Navbar />
+      {showOnboarding && (
+        <OnboardingModal
+          onComplete={() => setShowOnboarding(false)}
+          onSkip={() => setShowOnboarding(false)}
+        />
+      )}
       <div className="dashboard">
         <div className="grid-container">
           {/* Row 1 */}
           <div
             className="card yellow patient"
             onClick={() => navigate("/user-profile")}
-            tyle={{ cursor: "pointer" }}
+            style={{ cursor: "pointer" }}
           >
             <h3>Patient Summary</h3>
             <div className="Dashboard-Profile-lottieAnimation">

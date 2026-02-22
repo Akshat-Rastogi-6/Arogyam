@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import "./User-profile.module.css";
+import { useState, useEffect } from "react";
+import "./User-profile.css";
 import VerticalNav from "../components/VerticalNav.jsx";
 import HumanBodyViewer from "../components/HumanBodyViewer.jsx";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
@@ -34,7 +34,7 @@ const UserProfile = () => {
         const freshData = response.data.patient;
         setUserData(freshData);
         localStorage.setItem('userProfile', JSON.stringify(freshData));
-      } catch (err) {
+      } catch {
         setError("Failed to load user data");
       } finally {
         setLoading(false);
