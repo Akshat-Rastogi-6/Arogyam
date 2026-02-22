@@ -1,19 +1,19 @@
-import pkg from 'pg';
-const { Pool } = pkg;
+import mysql from 'mysql2/promise';
 import 'dotenv/config';
 
-const pool = new Pool({
-  host: process.env.PG_HOST,
-  port: process.env.PG_PORT,
-  user: process.env.PG_USER,
-  password: process.env.PG_PASSWORD,
-  database: process.env.PG_DB,
-  ssl: false, // Disable SSL
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  ssl: {
+    minVersion: 'TLSv1.2',
+    rejectUnauthorized: true
+  }
 });
-
-
-// pool.connect()
-//   .then(() => console.log("Database connected to PostgreSQL"))
-//   .catch((err) => console.error("Error while connecting:", err));
 
 export default pool;

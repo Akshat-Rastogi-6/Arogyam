@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"; // modified import
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios"; // added import
-import "./Dashboard.css";
+import "./Dashboard.module.css";
 
 // Image Imports
 import naturalIcon from "../public/images/dashboard/Protecting your health with natural remedies.png";
@@ -10,6 +10,7 @@ import homeRemediesIcon from "../public/images/dashboard/Home Solutions and Home
 // Component Imports
 import Navbar from "../components/Navbar.jsx";
 import WeatherTip from "../components/WeatherTip.jsx"; // new import
+import OnboardingModal from "../components/OnboardingModal.jsx";
 
 // Lottie Animation Imports
 import Lottie from "lottie-react";
@@ -26,14 +27,29 @@ const Dashboard = () => {
 
   // added state for user profile to get appointment dates
   const [profile, setProfile] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
+    // Load cached data immediately
+    const cachedGoogleFit = localStorage.getItem('googleFitData');
+    if (cachedGoogleFit) {
+      try {
+        setGoogleFitData(JSON.parse(cachedGoogleFit));
+        setLoadingGoogleFit(false);
+      } catch (e) {
+        console.error('Error parsing cached Google Fit data', e);
+      }
+    }
+
+    // Fetch fresh data in background
     async function fetchGoogleFit() {
       try {
         const response = await axios.get("http://localhost:5001/api/patients/googlefit", {
           withCredentials: true,
         });
-        setGoogleFitData(response.data.googleFitData);
+        const freshData = response.data.googleFitData;
+        setGoogleFitData(freshData);
+        localStorage.setItem('googleFitData', JSON.stringify(freshData));
       } catch (error) {
         console.error("Error fetching Google Fit data", error);
       } finally {
@@ -45,17 +61,53 @@ const Dashboard = () => {
 
   // new useEffect to fetch profile data
   useEffect(() => {
+    // Load cached data immediately
+    const cachedProfile = localStorage.getItem('userProfile');
+    if (cachedProfile) {
+      try {
+        setProfile(JSON.parse(cachedProfile));
+      } catch (e) {
+        console.error('Error parsing cached profile', e);
+      }
+    }
+
+    // Fetch fresh data in background
     async function fetchProfile() {
       try {
         const response = await axios.get("http://localhost:5001/api/patients/profile", {
           withCredentials: true,
         });
-        setProfile(response.data.patient);
+        const freshData = response.data.patient;
+        setProfile(freshData);
+        localStorage.setItem('userProfile', JSON.stringify(freshData));
       } catch (error) {
         console.error("Error fetching profile", error);
       }
     }
     fetchProfile();
+  }, []);
+
+  // Check onboarding status
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      {showOnboarding && (
+        <OnboardingModal
+          onComplete={() => setShowOnboarding(false)}
+          onSkip={() => setShowOnboarding(false)}
+        />
+      )}
+      try {
+        const response = await axios.get("http://localhost:5001/api/health/onboarding", {
+          withCredentials: true,
+        });
+        if (response.data.onboarding.needsOnboarding) {
+          setShowOnboarding(true);
+        }
+      } catch (error) {
+        console.error("Error checking onboarding status", error);
+      }
+    };
+    checkOnboarding();
   }, []);
 
   return (

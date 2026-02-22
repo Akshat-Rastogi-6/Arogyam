@@ -123,7 +123,7 @@ const getGoogleFitData = async (googleFitToken, googleRefreshToken) => {
 };
 const updateGoogleFitHourlyData = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM patients WHERE id = ?", [req.patientId]);
+    const { rows } = await pool.query("SELECT * FROM patients WHERE id = $1", [req.patientId]);
     if (!rows.length) {
       return res.status(404).json({ success: false, message: "Patient not found" });
     }
@@ -162,23 +162,23 @@ const updateGoogleFitHourlyData = async (req, res) => {
         patient_id, hour, steps_walked, calories_burned, distance_walked, recent_heart_rate, recent_spo2,
         systolic, diastolic, active_minutes, floors_climbed, sleep_duration, body_fat_percentage,
         body_mass_index, water_intake, active_energy, exercise_minutes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        steps_walked = VALUES(steps_walked),
-        calories_burned = VALUES(calories_burned),
-        distance_walked = VALUES(distance_walked),
-        recent_heart_rate = VALUES(recent_heart_rate),
-        recent_spo2 = VALUES(recent_spo2),
-        systolic = VALUES(systolic),
-        diastolic = VALUES(diastolic),
-        active_minutes = VALUES(active_minutes),
-        floors_climbed = VALUES(floors_climbed),
-        sleep_duration = VALUES(sleep_duration),
-        body_fat_percentage = VALUES(body_fat_percentage),
-        body_mass_index = VALUES(body_mass_index),
-        water_intake = VALUES(water_intake),
-        active_energy = VALUES(active_energy),
-        exercise_minutes = VALUES(exercise_minutes),
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+      ON CONFLICT (patient_id, hour) DO UPDATE SET
+        steps_walked = EXCLUDED.steps_walked,
+        calories_burned = EXCLUDED.calories_burned,
+        distance_walked = EXCLUDED.distance_walked,
+        recent_heart_rate = EXCLUDED.recent_heart_rate,
+        recent_spo2 = EXCLUDED.recent_spo2,
+        systolic = EXCLUDED.systolic,
+        diastolic = EXCLUDED.diastolic,
+        active_minutes = EXCLUDED.active_minutes,
+        floors_climbed = EXCLUDED.floors_climbed,
+        sleep_duration = EXCLUDED.sleep_duration,
+        body_fat_percentage = EXCLUDED.body_fat_percentage,
+        body_mass_index = EXCLUDED.body_mass_index,
+        water_intake = EXCLUDED.water_intake,
+        active_energy = EXCLUDED.active_energy,
+        exercise_minutes = EXCLUDED.exercise_minutes,
         updated_at = CURRENT_TIMESTAMP`,
       [
         req.patientId,
@@ -210,17 +210,15 @@ const updateGoogleFitHourlyData = async (req, res) => {
 };
 
 // Schedule the task to run every hour
-// NOTE: This cron job is disabled because it needs to be refactored
-// to work without Express req/res objects and to iterate through all patients
-// cron.schedule("0 * * * *", () => {
-//   console.log("Running hourly Google Fit data update...");
-//   updateGoogleFitHourlyData();
-// });
+cron.schedule("0 * * * *", () => {
+  console.log("Running hourly Google Fit data update...");
+  updateGoogleFitHourlyData();
+});
 
 export const getGoogleFit = async (req, res) => {
   try {
     // Fetch patient details
-    const [rows] = await pool.query("SELECT * FROM patients WHERE id = ?", [req.patientId]);
+    const { rows } = await pool.query("SELECT * FROM patients WHERE id = $1", [req.patientId]);
     if (!rows.length) {
       return res.status(404).json({ success: false, message: "Patient not found" });
     }
@@ -243,7 +241,7 @@ export const getPatientDetails = async (req, res) => {
   try {
 
     // Fetch patient details
-    const [rows] = await pool.query("SELECT * FROM patients WHERE id = ?", [req.patientId]);
+    const { rows } = await pool.query("SELECT * FROM patients WHERE id = $1", [req.patientId]);
     if (!rows.length) {
       return res.status(404).json({ success: false, message: "Patient not found" });
     }
@@ -252,8 +250,9 @@ export const getPatientDetails = async (req, res) => {
     const { google_fit_token, google_refresh_token, ...patientDetails } = patient;
 
     // Fetch health info
-    const [healthInfoRows] = await pool.query("SELECT * FROM patient_info WHERE patient_id = ?", [req.patientId]);
-    const healthInfo = healthInfoRows[0] || {};
+    const healthInfo = (
+      await pool.query("SELECT * FROM patient_info WHERE patient_id = $1", [req.patientId])
+    ).rows[0] || {};
     
     // Extract age, height, weight, and blood type
     const { age, height, weight, blood_type } = healthInfo;
@@ -313,7 +312,7 @@ export const getUserInfoDetails = async (req, res) => {
   try {
 
     // Fetch patient details
-    const [rows] = await pool.query("SELECT * FROM patients WHERE id = ?", [req.patientId]);
+    const { rows } = await pool.query("SELECT * FROM patients WHERE id = $1", [req.patientId]);
     if (!rows.length) {
       return res.status(404).json({ success: false, message: "Patient not found" });
     }
@@ -322,8 +321,9 @@ export const getUserInfoDetails = async (req, res) => {
     const { ...patientDetails } = patient;
 
     // Fetch health info
-    const [healthInfoRows] = await pool.query("SELECT * FROM patient_info WHERE patient_id = ?", [req.patientId]);
-    const healthInfo = healthInfoRows[0] || {};
+    const healthInfo = (
+      await pool.query("SELECT * FROM patient_info WHERE patient_id = $1", [req.patientId])
+    ).rows[0] || {};
     
 
     // console.log("✅ Retrieved Health Info:", healthInfo);
@@ -342,20 +342,13 @@ export const getUserInfoDetails = async (req, res) => {
   }
 }
 
-// Helper function to convert boolean values
-const toBool = (value) => {
-  if (value === "" || value === null || value === undefined) return null;
-  if (value === "true" || value === true || value === 1 || value === "1") return true;
-  if (value === "false" || value === false || value === 0 || value === "0") return false;
-  return null;
-};
 
 export const updatePatientDetails = async (req, res) => {
   const { firstName, lastName, address, city, state, pincode, phoneNumber, ...healthInfo } = req.body;
 
   try {
-    const [rows] = await pool.query('SELECT * FROM patients WHERE id = ?', [req.patientId]);
-    const patient = rows[0];
+    const result = await pool.query('SELECT * FROM patients WHERE id = $1', [req.patientId]);
+    const patient = result.rows[0];
 
     if (!patient) {
       return res.status(404).json({ success: false, message: 'Patient not found' });
@@ -364,8 +357,8 @@ export const updatePatientDetails = async (req, res) => {
     // Update patients table
     await pool.query(
       `UPDATE patients
-       SET first_name = ?, last_name = ?, address = ?, city = ?, state = ?, pincode = ?, phone_number = ?, updated_at = NOW()
-       WHERE id = ?`,
+       SET first_name = $1, last_name = $2, address = $3, city = $4, state = $5, pincode = $6, phone_number = $7, updated_at = NOW()
+       WHERE id = $8`,
       [
         firstName || patient.first_name,
         lastName || patient.last_name,
@@ -379,66 +372,66 @@ export const updatePatientDetails = async (req, res) => {
     );
 
     // Check if patient_info exists
-    const [healthResult] = await pool.query('SELECT * FROM patient_info WHERE patient_id = ?', [req.patientId]);
-    if (healthResult.length > 0) {
+    const healthResult = await pool.query('SELECT * FROM patient_info WHERE patient_id = $1', [req.patientId]);
+    if (healthResult.rows.length > 0) {
       // Update existing health record
       await pool.query(
         `UPDATE patient_info
-        SET age = ?, gender_identity = ?, height = ?, weight = ?, blood_type = ?,
-            smokes = ?, alcohol = ?, recreational_drugs = ?,
-            drug_details = ?, exercise_frequency = ?, diet_description = ?, sleep_hours = ?,
-            chronic_conditions = ?, medications = ?, allergies = ?, surgeries = ?, family_history = ?,
-            mental_health_conditions = ?, last_checkup = ?, vaccinations_up_to_date = ?, dental_checkups = ?,
-            sexual_performance_issues = ?, libido_concerns = ?, testicular_pain_lumps = ?, urination_issues = ?,
-            prostate_exam = ?, weight_changes = ?, hair_loss_concerns = ?, menstrual_start_age = ?,
-            menstrual_regular = ?, severe_cramps = ?, heavy_bleeding = ?, pregnancy_status = ?,
-            pregnancy_count = ?, pregnancy_complications = ?, menopause_symptoms = ?, menopause_start_age = ?,
-            breast_self_exam = ?, last_mammogram = ?, breast_changes = ?, last_pap_smear = ?,
-            gynecological_conditions = ?
-        WHERE patient_id = ?`,
+        SET age = $1, gender_identity = $2, height = $3, weight = $4, blood_type = $5,
+            smokes = $6, alcohol = $7, recreational_drugs = $8,
+            drug_details = $9, exercise_frequency = $10, diet_description = $11, sleep_hours = $12,
+            chronic_conditions = $13, medications = $14, allergies = $15, surgeries = $16, family_history = $17,
+            mental_health_conditions = $18, last_checkup = $19, vaccinations_up_to_date = $20, dental_checkups = $21,
+            sexual_performance_issues = $22, libido_concerns = $23, testicular_pain_lumps = $24, urination_issues = $25,
+            prostate_exam = $26, weight_changes = $27, hair_loss_concerns = $28, menstrual_start_age = $29,
+            menstrual_regular = $30, severe_cramps = $31, heavy_bleeding = $32, pregnancy_status = $33,
+            pregnancy_count = $34, pregnancy_complications = $35, menopause_symptoms = $36, menopause_start_age = $37,
+            breast_self_exam = $38, last_mammogram = $39, breast_changes = $40, last_pap_smear = $41,
+            gynecological_conditions = $42
+        WHERE patient_id = $43`,
         [
-          healthInfo.age || healthResult[0].age,
-          healthInfo.gender_identity || healthResult[0].gender_identity,
-          healthInfo.height || healthResult[0].height,
-          healthInfo.weight || healthResult[0].weight,
-          healthInfo.blood_type || healthResult[0].blood_type,
-          toBool(healthInfo.smokes) ?? healthResult[0].smokes,
-          toBool(healthInfo.alcohol) ?? healthResult[0].alcohol,
-          toBool(healthInfo.recreational_drugs) ?? healthResult[0].recreational_drugs,
-          healthInfo.drug_details ?? healthResult[0].drug_details,
-          healthInfo.exercise_frequency ?? healthResult[0].exercise_frequency,
-          healthInfo.diet_description ?? healthResult[0].diet_description,
-          healthInfo.sleep_hours ?? healthResult[0].sleep_hours,
-          healthInfo.chronic_conditions ?? healthResult[0].chronic_conditions,
-          healthInfo.medications ?? healthResult[0].medications,
-          healthInfo.allergies ?? healthResult[0].allergies,
-          healthInfo.surgeries ?? healthResult[0].surgeries,
-          healthInfo.family_history ?? healthResult[0].family_history,
-          healthInfo.mental_health_conditions ?? healthResult[0].mental_health_conditions,
-          healthInfo.last_checkup ?? healthResult[0].last_checkup,
-          toBool(healthInfo.vaccinations_up_to_date) ?? healthResult[0].vaccinations_up_to_date,
-          toBool(healthInfo.dental_checkups) ?? healthResult[0].dental_checkups,
-          toBool(healthInfo.sexual_performance_issues) ?? healthResult[0].sexual_performance_issues,
-          healthInfo.libido_concerns ?? healthResult[0].libido_concerns,
-          healthInfo.testicular_pain_lumps ?? healthResult[0].testicular_pain_lumps,
-          healthInfo.urination_issues ?? healthResult[0].urination_issues,
-          healthInfo.prostate_exam ?? healthResult[0].prostate_exam,
-          healthInfo.weight_changes ?? healthResult[0].weight_changes,
-          healthInfo.hair_loss_concerns ?? healthResult[0].hair_loss_concerns,
-          healthInfo.menstrual_start_age ?? healthResult[0].menstrual_start_age,
-          toBool(healthInfo.menstrual_regular) ?? healthResult[0].menstrual_regular,
-          toBool(healthInfo.severe_cramps) ?? healthResult[0].severe_cramps,
-          toBool(healthInfo.heavy_bleeding) ?? healthResult[0].heavy_bleeding,
-          toBool(healthInfo.pregnancy_status) ?? healthResult[0].pregnancy_status,
-          healthInfo.pregnancy_count ?? healthResult[0].pregnancy_count,
-          healthInfo.pregnancy_complications ?? healthResult[0].pregnancy_complications,
-          toBool(healthInfo.menopause_symptoms) ?? healthResult[0].menopause_symptoms,
-          healthInfo.menopause_start_age ?? healthResult[0].menopause_start_age,
-          toBool(healthInfo.breast_self_exam) ?? healthResult[0].breast_self_exam,
-          healthInfo.last_mammogram ?? healthResult[0].last_mammogram,
-          healthInfo.breast_changes ?? healthResult[0].breast_changes,
-          healthInfo.last_pap_smear ?? healthResult[0].last_pap_smear,
-          healthInfo.gynecological_conditions ?? healthResult[0].gynecological_conditions,
+          healthInfo.age || healthResult.rows[0].age,
+          healthInfo.gender_identity || healthResult.rows[0].gender_identity,
+          healthInfo.height || healthResult.rows[0].height,
+          healthInfo.weight || healthResult.rows[0].weight,
+          healthInfo.blood_type || healthResult.rows[0].blood_type,
+          healthInfo.smokes ?? healthResult.rows[0].smokes,
+          healthInfo.alcohol ?? healthResult.rows[0].alcohol,
+          healthInfo.recreational_drugs ?? healthResult.rows[0].recreational_drugs,
+          healthInfo.drug_details ?? healthResult.rows[0].drug_details,
+          healthInfo.exercise_frequency ?? healthResult.rows[0].exercise_frequency,
+          healthInfo.diet_description ?? healthResult.rows[0].diet_description,
+          healthInfo.sleep_hours ?? healthResult.rows[0].sleep_hours,
+          healthInfo.chronic_conditions ?? healthResult.rows[0].chronic_conditions,
+          healthInfo.medications ?? healthResult.rows[0].medications,
+          healthInfo.allergies ?? healthResult.rows[0].allergies,
+          healthInfo.surgeries ?? healthResult.rows[0].surgeries,
+          healthInfo.family_history ?? healthResult.rows[0].family_history,
+          healthInfo.mental_health_conditions ?? healthResult.rows[0].mental_health_conditions,
+          healthInfo.last_checkup ?? healthResult.rows[0].last_checkup,
+          healthInfo.vaccinations_up_to_date ?? healthResult.rows[0].vaccinations_up_to_date,
+          healthInfo.dental_checkups ?? healthResult.rows[0].dental_checkups,
+          healthInfo.sexual_performance_issues ?? healthResult.rows[0].sexual_performance_issues,
+          healthInfo.libido_concerns ?? healthResult.rows[0].libido_concerns,
+          healthInfo.testicular_pain_lumps ?? healthResult.rows[0].testicular_pain_lumps,
+          healthInfo.urination_issues ?? healthResult.rows[0].urination_issues,
+          healthInfo.prostate_exam ?? healthResult.rows[0].prostate_exam,
+          healthInfo.weight_changes ?? healthResult.rows[0].weight_changes,
+          healthInfo.hair_loss_concerns ?? healthResult.rows[0].hair_loss_concerns,
+          healthInfo.menstrual_start_age ?? healthResult.rows[0].menstrual_start_age,
+          healthInfo.menstrual_regular ?? healthResult.rows[0].menstrual_regular,
+          healthInfo.severe_cramps ?? healthResult.rows[0].severe_cramps,
+          healthInfo.heavy_bleeding ?? healthResult.rows[0].heavy_bleeding,
+          healthInfo.pregnancy_status ?? healthResult.rows[0].pregnancy_status,
+          healthInfo.pregnancy_count ?? healthResult.rows[0].pregnancy_count,
+          healthInfo.pregnancy_complications ?? healthResult.rows[0].pregnancy_complications,
+          healthInfo.menopause_symptoms ?? healthResult.rows[0].menopause_symptoms,
+          healthInfo.menopause_start_age ?? healthResult.rows[0].menopause_start_age,
+          healthInfo.breast_self_exam ?? healthResult.rows[0].breast_self_exam,
+          healthInfo.last_mammogram ?? healthResult.rows[0].last_mammogram,
+          healthInfo.breast_changes ?? healthResult.rows[0].breast_changes,
+          healthInfo.last_pap_smear ?? healthResult.rows[0].last_pap_smear,
+          healthInfo.gynecological_conditions ?? healthResult.rows[0].gynecological_conditions,
           req.patientId,
         ]
       );
@@ -454,8 +447,9 @@ export const updatePatientDetails = async (req, res) => {
           pregnancy_status, pregnancy_count, pregnancy_complications, menopause_symptoms, menopause_start_age,
           breast_self_exam, last_mammogram, breast_changes, last_pap_smear, gynecological_conditions
         ) VALUES (
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21,
+          $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40,
+          $41, $42, $43
         )`,
         [
           req.patientId,
@@ -464,9 +458,9 @@ export const updatePatientDetails = async (req, res) => {
           healthInfo.height ? parseFloat(healthInfo.height) || null : null,
           healthInfo.weight ? parseFloat(healthInfo.weight) || null : null,
           healthInfo.blood_type || null,
-          toBool(healthInfo.smokes), 
-          toBool(healthInfo.alcohol), 
-          toBool(healthInfo.recreational_drugs), 
+          healthInfo.smokes === "" ? null : healthInfo.smokes, 
+          healthInfo.alcohol === "" ? null : healthInfo.alcohol, 
+          healthInfo.recreational_drugs === "" ? null : healthInfo.recreational_drugs, 
           healthInfo.drug_details || null,
           healthInfo.exercise_frequency || null,
           healthInfo.diet_description || null,
@@ -478,25 +472,25 @@ export const updatePatientDetails = async (req, res) => {
           healthInfo.family_history || null,
           healthInfo.mental_health_conditions || null,
           healthInfo.last_checkup || null,
-          toBool(healthInfo.vaccinations_up_to_date),  
-          toBool(healthInfo.dental_checkups),  
-          toBool(healthInfo.sexual_performance_issues),  
-          toBool(healthInfo.libido_concerns),  
-          toBool(healthInfo.testicular_pain_lumps),  
-          toBool(healthInfo.urination_issues),  
-          toBool(healthInfo.prostate_exam),  
-          toBool(healthInfo.weight_changes),  
-          toBool(healthInfo.hair_loss_concerns),  
+          healthInfo.vaccinations_up_to_date === "" ? null : healthInfo.vaccinations_up_to_date,  
+          healthInfo.dental_checkups === "" ? null : healthInfo.dental_checkups,  
+          healthInfo.sexual_performance_issues === "" ? null : healthInfo.sexual_performance_issues,  
+          healthInfo.libido_concerns === "" ? null : healthInfo.libido_concerns,  
+          healthInfo.testicular_pain_lumps === "" ? null : healthInfo.testicular_pain_lumps,  
+          healthInfo.urination_issues === "" ? null : healthInfo.urination_issues,  
+          healthInfo.prostate_exam === "" ? null : healthInfo.prostate_exam,  
+          healthInfo.weight_changes === "" ? null : healthInfo.weight_changes,  
+          healthInfo.hair_loss_concerns === "" ? null : healthInfo.hair_loss_concerns,  
           healthInfo.menstrual_start_age ? parseInt(healthInfo.menstrual_start_age) || null : null,
-          toBool(healthInfo.menstrual_regular),  
-          toBool(healthInfo.severe_cramps), 
-          toBool(healthInfo.heavy_bleeding), 
-          toBool(healthInfo.pregnancy_status),
+          healthInfo.menstrual_regular === "" ? null : healthInfo.menstrual_regular,  
+          healthInfo.severe_cramps === "" ? null : healthInfo.severe_cramps, 
+          healthInfo.heavy_bleeding === "" ? null : healthInfo.heavy_bleeding, 
+          healthInfo.pregnancy_status === "" ? null : healthInfo.pregnancy_status,
           healthInfo.pregnancy_count ? parseInt(healthInfo.pregnancy_count) || null : null,
           healthInfo.pregnancy_complications || null,
-          toBool(healthInfo.menopause_symptoms), 
+          healthInfo.menopause_symptoms === "" ? null : healthInfo.menopause_symptoms, 
           healthInfo.menopause_start_age ? parseInt(healthInfo.menopause_start_age) || null : null,
-          toBool(healthInfo.breast_self_exam), 
+          healthInfo.breast_self_exam === "" ? null : healthInfo.breast_self_exam, 
           healthInfo.last_mammogram || null,
           healthInfo.breast_changes || null,
           healthInfo.last_pap_smear || null,

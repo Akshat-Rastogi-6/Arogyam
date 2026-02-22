@@ -1,23 +1,39 @@
 import React, { useState, useEffect } from "react";
-import "./User-profile.css";
+import "./User-profile.module.css";
 import VerticalNav from "../components/VerticalNav.jsx";
 import HumanBodyViewer from "../components/HumanBodyViewer.jsx";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
 import axios from "axios";
 
 const UserProfile = () => {
-  const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Check for cached data immediately to avoid showing loading state
+  const cachedProfile = localStorage.getItem('userProfile');
+  const [userData, setUserData] = useState(cachedProfile ? JSON.parse(cachedProfile) : null);
+  const [loading, setLoading] = useState(!cachedProfile); // Only show loading if no cache
   const [error, setError] = useState(null);
+  const [medicalSummary, setMedicalSummary] = useState([]);
 
   useEffect(() => {
+    // Load cached data immediately
+    const cachedProfile = localStorage.getItem('userProfile');
+    if (cachedProfile) {
+      try {
+        setUserData(JSON.parse(cachedProfile));
+        setLoading(false);
+      } catch (e) {
+        console.error('Error parsing cached profile', e);
+      }
+    }
+
     const fetchUserProfile = async () => {
       try {
         const response = await axios.get(
           "http://localhost:5001/api/patients/profile",
           { withCredentials: true }
         );
-        setUserData(response.data.patient);
+        const freshData = response.data.patient;
+        setUserData(freshData);
+        localStorage.setItem('userProfile', JSON.stringify(freshData));
       } catch (err) {
         setError("Failed to load user data");
       } finally {
@@ -26,6 +42,23 @@ const UserProfile = () => {
     };
 
     fetchUserProfile();
+  }, []);
+
+  // Fetch medical summary
+  useEffect(() => {
+    const fetchMedicalSummary = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:5001/api/health/summary",
+          { withCredentials: true }
+        );
+        setMedicalSummary(response.data.summary || []);
+      } catch (err) {
+        console.error("Error fetching medical summary:", err);
+      }
+    };
+
+    fetchMedicalSummary();
   }, []);
 
   const currentHour = new Date().getHours();
@@ -122,6 +155,29 @@ const UserProfile = () => {
             </div>
           </div>
         </section>
+
+        {/* Medical Summary Section */}
+        {medicalSummary.length > 0 && (
+          <section className="medical-summary-section">
+            <h3>Medical Summary</h3>
+            <p className="section-subtitle">Health insights from your consultations and activity data</p>
+            <div className="summary-grid">
+              {medicalSummary.map((item, index) => (
+                <div key={index} className={`summary-card severity-${item.severity}`}>
+                  <div className="summary-header">
+                    <span className="summary-type">{item.summary_type}</span>
+                    <span className="summary-source">{item.source}</span>
+                  </div>
+                  <p className="summary-content">{item.content}</p>
+                  <div className="summary-footer">
+                    <small>First mentioned: {new Date(item.first_mentioned).toLocaleDateString()}</small>
+                    <small>Last updated: {new Date(item.last_updated).toLocaleDateString()}</small>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       <div className="body-card">

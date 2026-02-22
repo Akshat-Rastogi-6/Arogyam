@@ -3,7 +3,7 @@ import 'dotenv/config';
 
 export const generateJWTToken = (res, userId, email) => {
   const payload = {
-    userId,
+    patientId: userId,  // Changed from userId to patientId for consistency
     email,
   }
 

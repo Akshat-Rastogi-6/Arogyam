@@ -11,8 +11,7 @@ const WeatherTip = () => {
         (position) => {
           const { latitude, longitude } = position.coords;
           // Load weather API key from env
-          const weatherApiKey = '227b3fbd398dbc05d444e566470a503d'
-          ;
+          const weatherApiKey = import.meta.env.VITE_WEATHER_API_KEY || '227b3fbd398dbc05d444e566470a503d';
           fetch(
             `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${weatherApiKey}&units=metric`
           )

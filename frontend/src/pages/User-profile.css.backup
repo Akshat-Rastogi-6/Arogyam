@@ -357,3 +357,97 @@
     margin: clamp(0.5rem, 1vw, 0.75rem) 0;
   }
 }
+.medical-summary-section {
+  margin-top: 30px;
+  padding: 25px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.medical-summary-section h3 {
+  margin: 0 0 5px 0;
+  color: #333;
+  font-size: 22px;
+}
+
+.section-subtitle {
+  color: #666;
+  font-size: 14px;
+  margin: 0 0 20px 0;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+}
+
+.summary-card {
+  padding: 15px;
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+  background: #f9f9f9;
+  transition: transform 0.2s;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.summary-card.severity-high {
+  border-left-color: #ef4444;
+  background: #fef2f2;
+}
+
+.summary-card.severity-medium {
+  border-left-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.summary-card.severity-low {
+  border-left-color: #10b981;
+  background: #f0fdf4;
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.summary-type {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #667eea;
+}
+
+.summary-source {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: #e0e7ff;
+  color: #4338ca;
+  border-radius: 12px;
+}
+
+.summary-content {
+  margin: 10px 0;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.summary-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.summary-footer small {
+  color: #999;
+  font-size: 11px;
+}

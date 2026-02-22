@@ -6,6 +6,7 @@ import bodyParser from 'body-parser';
 import 'dotenv/config';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/patientRoutes.js';
+import healthRoutes from './routes/healthRoutes.js';
 
 const app = express();
 
@@ -20,17 +21,20 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-pool.connect((err) => {
-  if (err) {
-    console.error("Database connection failed:", err.stack);
-  } else {
-    console.log("Connected to PostgreSQL");
-  }
-});
+// Test database connection
+pool.getConnection()
+  .then((connection) => {
+    console.log("✅ Connected to MySQL/TiDB Database");
+    connection.release();
+  })
+  .catch((err) => {
+    console.error("❌ Database connection failed:", err.message);
+  });
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', userRoutes);
+app.use('/api/health', healthRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

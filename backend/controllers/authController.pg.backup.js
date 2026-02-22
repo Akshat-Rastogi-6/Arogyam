@@ -23,8 +23,8 @@ export const signup = async (req, res) => {
     }
 
     // Check if patient already exists
-    const [existingPatients] = await pool.query('SELECT * FROM patients WHERE email = ?', [email]);
-    if (existingPatients.length > 0) {
+    const patientAlreadyExists = await pool.query('SELECT * FROM patients WHERE email = $1', [email]);
+    if (patientAlreadyExists.rows.length > 0) {
       return res.status(400).json({ success: false, message: 'Patient already exists' });
     }
 
@@ -32,15 +32,13 @@ export const signup = async (req, res) => {
     const verificationToken = generateVerificationToken();
 
     // Insert patient record into database
-    const [result] = await pool.query(
+    const result = await pool.query(
       `INSERT INTO patients (first_name, last_name, email, password, address, city, state, pincode, phone_number, verification_token, verification_token_expires_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
       [firstName, lastName, email, hashedPassword, address, city, state, pincode, phoneNumber, verificationToken, new Date(Date.now() + 24 * 60 * 60 * 1000)]
     );
 
-    // Fetch the newly created patient
-    const [patients] = await pool.query('SELECT * FROM patients WHERE id = ?', [result.insertId]);
-    const patient = patients[0];
+    const patient = result.rows[0];
 
     // Send verification email
     await sendVerificationEmail(patient.email, verificationToken);
@@ -62,8 +60,8 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     // Find patient by email
-    const [patients] = await pool.query('SELECT * FROM patients WHERE email = ?', [email]);
-    const patient = patients[0];
+    const result = await pool.query('SELECT * FROM patients WHERE email = $1', [email]);
+    const patient = result.rows[0];
 
     if (!patient) {
       return res.status(400).json({ success: false, message: 'Invalid credentials' });
@@ -126,14 +124,14 @@ export const googleAuthCallback = async (req, res) => {
     const { email, name } = payload;
 
     // Check if user already exists
-    const [patients] = await pool.query('SELECT * FROM patients WHERE email = ?', [email]);
-    let patient = patients[0];
+    const result = await pool.query('SELECT * FROM patients WHERE email = $1', [email]);
+    let patient = result.rows[0];
 
     if (!patient) {
       // Create new patient
-      const [result] = await pool.query(
+      const newPatient = await pool.query(
         `INSERT INTO patients (first_name, last_name, email, is_verified, google_fit_token, google_refresh_token)
-        VALUES (?, ?, ?, ?, ?, ?)`,
+        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
         [
           name.split(' ')[0], 
           name.split(' ')[1] || '', 
@@ -143,15 +141,14 @@ export const googleAuthCallback = async (req, res) => {
           tokens.refresh_token || null
         ]
       );
-      const [newPatients] = await pool.query('SELECT * FROM patients WHERE id = ?', [result.insertId]);
-      patient = newPatients[0];
+      patient = newPatient.rows[0];
     } else {
       // Update the patient's Google tokens
       await pool.query(
         `UPDATE patients 
-         SET google_fit_token = ?, 
-             google_refresh_token = ? 
-         WHERE email = ?`,
+         SET google_fit_token = $1, 
+             google_refresh_token = $2 
+         WHERE email = $3`,
         [
           tokens.access_token || patient.google_fit_token, 
           tokens.refresh_token || patient.google_refresh_token, 
@@ -176,16 +173,16 @@ export const logout = async (req, res) => {
 export const deleteData = async (req, res) => { 
   try { 
     // Find patient by ID
-    const [patients] = await pool.query('SELECT * FROM patients WHERE id = ?', [req.patientId]);
-    const patient = patients[0];
+    const result = await pool.query('SELECT * FROM patients WHERE id = $1', [req.patientId]);
+    const patient = result.rows[0];
 
     if (!patient) {
       return res.status(400).json({ success: false, message: 'Patient not found' });
     }
 
     // Delete patient data from the database
-    await pool.query('DELETE FROM patient_info WHERE patient_id = ?', [req.patientId]);
-    await pool.query('DELETE FROM google_fit_hourly_data WHERE patient_id = ?', [req.patientId]);
+    await pool.query('DELETE FROM patient_info WHERE patient_id = $1', [req.patientId]);
+    await pool.query('DELETE FROM google_fit_hourly_data WHERE patient_id = $1', [req.patientId]);
 
     return res.status(200).json({ success: true, message: 'Data deleted successfully' });
   } catch (error) { 
@@ -196,17 +193,17 @@ export const deleteData = async (req, res) => {
 export const deleteAccount = async (req, res) => {
   try {
     // Find patient by ID
-    const [patients] = await pool.query('SELECT * FROM patients WHERE id = ?', [req.patientId]);
-    const patient = patients[0];
+    const result = await pool.query('SELECT * FROM patients WHERE id = $1', [req.patientId]);
+    const patient = result.rows[0];
 
     if (!patient) {
       return res.status(400).json({ success: false, message: 'Patient not found' });
     }
 
     // Delete patient from the database
-    await pool.query('DELETE FROM patients WHERE id = ?', [req.patientId]);
-    await pool.query('DELETE FROM patient_info WHERE patient_id = ?', [req.patientId]);
-    await pool.query('DELETE FROM google_fit_hourly_data WHERE patient_id = ?', [req.patientId]);
+    await pool.query('DELETE FROM patients WHERE id = $1', [req.patientId]);
+    await pool.query('DELETE FROM patient_info WHERE patient_id = $1', [req.patientId]);
+    await pool.query('DELETE FROM google_fit_hourly_data WHERE patient_id = $1', [req.patientId]);
 
     return res.status(200).json({ success: true, message: 'Account deleted successfully' });
   } catch (error) {
@@ -218,15 +215,15 @@ export const verifyEmail = async (req, res) => {
   const { otp } = req.body;
   try {
     // Find patient by verification token
-    const [patients] = await pool.query('SELECT * FROM patients WHERE verification_token = ? AND verification_token_expires_at > NOW()', [otp]);
-    const patient = patients[0];
+    const result = await pool.query('SELECT * FROM patients WHERE verification_token = $1 AND verification_token_expires_at > $2', [otp, new Date(Math.floor(Date.now() / 1000) + 24 * 60 * 60)]);
+    const patient = result.rows[0];
 
     if (!patient) {
       return res.status(400).json({ success: false, message: 'Invalid or expired verification code' });
     }
 
     // Mark patient as verified
-    await pool.query('UPDATE patients SET is_verified = true, verification_token = NULL, verification_token_expires_at = NULL WHERE id = ?', [patient.id]);
+    await pool.query('UPDATE patients SET is_verified = true, verification_token = NULL, verification_token_expires_at = NULL WHERE id = $1', [patient.id]);
 
     // Send confirmation email
     await sendConfirmationEmail(patient.email, patient.first_name);
@@ -236,13 +233,12 @@ export const verifyEmail = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
-
 export const forgetPassword = async (req, res) => {
   const { email } = req.body;
   try {
     // Find patient by email
-    const [patients] = await pool.query('SELECT * FROM patients WHERE email = ?', [email]);
-    const patient = patients[0];
+    const result = await pool.query('SELECT * FROM patients WHERE email = $1', [email]);
+    const patient = result.rows[0];
 
     if (!patient) {
       return res.status(400).json({ success: false, message: 'Patient not found' });
@@ -256,7 +252,7 @@ export const forgetPassword = async (req, res) => {
 
     // Update reset password token and expiration time in the database
     await pool.query(
-      'UPDATE patients SET reset_password_token = ?, reset_password_expires_at = ? WHERE id = ?',
+      'UPDATE patients SET reset_password_token = $1, reset_password_expires_at = $2 WHERE id = $3',
       [resetPasswordToken, resetPasswordExpiresAt, patient.id]
     );
 
@@ -274,13 +270,17 @@ export const resetPassword = async (req, res) => {
   const token = req.params.token;
   const { newPassword } = req.body;
   try {
+    // Create Date object for current time
+    const currentDate = new Date(); // Current Date object
+    const currentTimeInSeconds = Math.floor(currentDate.getTime() / 1000);  // Convert milliseconds to seconds
+
     // Query to get the patient based on the token and valid expiration time
-    const [patients] = await pool.query(
-      'SELECT * FROM patients WHERE reset_password_token = ? AND reset_password_expires_at > NOW()',
-      [token]
+    const result = await pool.query(
+      'SELECT * FROM patients WHERE reset_password_token = $1 AND reset_password_expires_at > to_timestamp($2)',
+      [token, currentTimeInSeconds]  // Compare against seconds stored in DB
     );
 
-    const patient = patients[0];
+    const patient = result.rows[0];
 
     if (!patient) {
       return res.status(400).json({ success: false, message: 'Invalid or expired reset password link' });
@@ -291,7 +291,7 @@ export const resetPassword = async (req, res) => {
 
     // Update password and clear reset token and expiration time
     await pool.query(
-      'UPDATE patients SET password = ?, reset_password_token = NULL, reset_password_expires_at = NULL WHERE id = ?',
+      'UPDATE patients SET password = $1, reset_password_token = NULL, reset_password_expires_at = NULL WHERE id = $2',
       [hashedPassword, patient.id]
     );
 
@@ -311,8 +311,8 @@ export const resendVerificationToken = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email is required' });
     }
 
-    const [patients] = await pool.query('SELECT * FROM patients WHERE email = ?', [email]);
-    const patient = patients[0];
+    const result = await pool.query('SELECT * FROM patients WHERE email = $1', [email]);
+    const patient = result.rows[0];
 
     if (!patient) {
       return res.status(400).json({ success: false, message: 'Patient not found' });
@@ -324,13 +324,14 @@ export const resendVerificationToken = async (req, res) => {
 
     const newVerificationToken = generateVerificationToken();
 
-    // Set expiration time to 24 hours from now
-    const expirationTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    // Get current time in seconds and add 24 hours for expiration
+    const currentTimeInSeconds = Math.floor(Date.now() / 1000);  // Convert milliseconds to seconds
+    const expirationTimeInSeconds = currentTimeInSeconds + 24 * 60 * 60; // Add 24 hours (in seconds)
 
     // Update the verification token and expiration time in the database
     await pool.query(
-      'UPDATE patients SET verification_token = ?, verification_token_expires_at = ? WHERE id = ?', 
-      [newVerificationToken, expirationTime, patient.id]
+      'UPDATE patients SET verification_token = $1, verification_token_expires_at = to_timestamp($2) WHERE id = $3', 
+      [newVerificationToken, expirationTimeInSeconds, patient.id]
     );
 
     // Send the verification email
@@ -345,8 +346,8 @@ export const resendVerificationToken = async (req, res) => {
 export const checkAuth = async (req, res) => {
   try {
     // Find patient by ID
-    const [patients] = await pool.query('SELECT * FROM patients WHERE id = ?', [req.patientId]);
-    const patient = patients[0];
+    const result = await pool.query('SELECT * FROM patients WHERE id = $1', [req.patientId]);
+    const patient = result.rows[0];
 
     if (!patient) {
       return res.status(400).json({ success: false, message: 'Patient not found' });

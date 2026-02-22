@@ -4,8 +4,10 @@ import Navbar from "../components/Navbar";
 import axios from "axios";
 
 const GoogleFit = () => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Check for cached data immediately to avoid showing loading state
+  const cachedGoogleFit = localStorage.getItem('googleFitData');
+  const [data, setData] = useState(cachedGoogleFit ? JSON.parse(cachedGoogleFit) : null);
+  const [loading, setLoading] = useState(!cachedGoogleFit); // Only show loading if no cache
   const [error, setError] = useState(null);
 
   const metrics = [
@@ -27,13 +29,26 @@ const GoogleFit = () => {
   ];
 
   useEffect(() => {
+    // Load cached data immediately
+    const cachedGoogleFit = localStorage.getItem('googleFitData');
+    if (cachedGoogleFit) {
+      try {
+        setData(JSON.parse(cachedGoogleFit));
+        setLoading(false);
+      } catch (e) {
+        console.error('Error parsing cached Google Fit data', e);
+      }
+    }
+
     const fetchGoogleFitData = async () => {
       try {
         const response = await axios.get(
           "http://localhost:5001/api/patients/googlefit",
           { withCredentials: true }
         );
-        setData(response.data.googleFitData);
+        const freshData = response.data.googleFitData;
+        setData(freshData);
+        localStorage.setItem('googleFitData', JSON.stringify(freshData));
       } catch (err) {
         setError("Failed to load Google Fit data");
       } finally {
